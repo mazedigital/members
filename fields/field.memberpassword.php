@@ -225,7 +225,7 @@
 			return Cryptography::hash($password);
 		}
 
-		protected static function checkPassword($password) {
+		public static function checkPassword($password) {
 			$strength = 0;
 			$patterns = array(
 				'/[a-z]/', '/[A-Z]/', '/[0-9]/',

@@ -256,6 +256,44 @@
 				}
 
 				return true;
+			} else {
+
+				$identity = $this->setIdentityField($data);
+
+				if(!$identity instanceof Field) return null;
+
+				// Member from Identity
+				$member_id = $identity->fetchMemberIDBy($data);
+
+				if ($member_id){
+					$hashedPassword = Symphony::Database()->fetchVar("password",0,"SELECT password FROM sym_entries_data_4 WHERE entry_id = {$member_id}");
+
+					if (substr($hashedPassword,0,4) == '$P$B'){
+
+						// die
+						include_once("class.passwordhash.php");
+						$wp_hasher = new PasswordHash(8, true);
+
+						$check = $wp_hasher->CheckPassword($data['password'], $hashedPassword);
+
+						if ($check){
+							// this is a WP Password please update password
+
+							$passwordField = $this->section->getField('password');
+
+							$PasswordData = array(
+								'password'	=> $passwordField->encodePassword($data['password']),
+								'strength'	=> fieldMemberPassword::checkPassword($data['password']),
+								'length'	=> strlen($data['password'])
+							);
+
+							Symphony::Database()->update($PasswordData,'sym_entries_data_4',"entry_id = {$member_id}");
+
+							//changed password retry again
+							return $this->login($credentials);
+						}
+					}
+				}
 			}
 
 			$this->logout();
